@@ -1,5 +1,5 @@
 # --------------------------------------------------------------------------------------------------
-# CloudFormation VPC + EC2 + S3
+# CloudFormation VPC + EC2 + S3 + RDS
 # Author: Sergii Turyk
 #
 # Version      Date           Name                Info
@@ -7,7 +7,7 @@
 #
 # --------------------------------------------------------------------------------------------------
 AWSTemplateFormatVersion: 2010-09-09
-Description: "VPC + EC2+wordpress + S3"
+Description: "VPC + EC2(+wordpress) + S3 + RDS"
 
 
 Resources:
