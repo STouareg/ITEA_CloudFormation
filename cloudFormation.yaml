@@ -158,6 +158,35 @@ Resources:
         - Key: Name
           Value: ITEA-S3-bucket-sturyk
 
+  iteaDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties: 
+      DBSubnetGroupDescription: itea-subnetgroup
+      DBSubnetGroupName: !Ref iteaSubnet1
+      SubnetIds: 
+        - Ref: iteaSubnet1
+        - Ref: iteaSubnet2
+      Tags: 
+        - Key: Name
+          Value: itea-subnetgroup
+
+  iteaDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties: 
+      AllocatedStorage: 20
+      StorageType: gp2
+      DBSubnetGroupName: !Ref iteaDBSubnetGroup
+      DBInstanceClass: db.t2.micro
+      Engine: mysql
+      EngineVersion: 8.0
+      DBName: iteadb
+      MasterUsername: itea
+      MasterUserPassword: q1q1q1q1
+      VPCSecurityGroups: 
+        - Ref: iteaDBSG
+
+
+
 #=================== OUTPUTS ===========================
 Outputs:
   ubuntuITEA1:
