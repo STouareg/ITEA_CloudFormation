@@ -7,12 +7,11 @@
 #
 # --------------------------------------------------------------------------------------------------
 AWSTemplateFormatVersion: 2010-09-09
-Description: "VPC + EC2(+wordpress) + S3"
+Description: "VPC + EC2+wordpress + S3"
 
-Parameters:
 
 Resources:
-  itea-vpc:
+  iteaVpc:
     Type: AWS::EC2::VPC
     Properties: 
       CidrBlock: 172.31.0.0/16
@@ -21,67 +20,67 @@ Resources:
       InstanceTenancy: default
       Tags:
         - Key: Name
-        Value: itea-vpc
+          Value: iteaVpc
       
-  itea-subnet-1:
+  iteaSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref itea-vpc
+      VpcId: !Ref iteaVpc
       AvailabilityZone: eu-central-1a
       CidrBlock: 172.31.0.0/20
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: itea-subnet-1
+          Value: iteaSubnet1
 
-  itea-subnet-2:
+  iteaSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      VpcId: !Ref itea-vpc
+      VpcId: !Ref iteaVpc
       AvailabilityZone: eu-central-1b
       CidrBlock: 172.31.16.0/20
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: itea-subnet-2
+          Value: iteaSubnet2
 
-  itea-igateway:
+  iteaIGateway:
     Type: AWS::EC2::InternetGateway
     Properties: 
       Tags: 
         - Key: Name
-          Value: itea-igateway
+          Value: iteaIGateway
 
-  itea-igateway-Attachment:
+  iteaIGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
-      InternetGatewayId: !Ref itea-igateway
-      VpcId: !Ref itea-vpc   
+      InternetGatewayId: !Ref iteaIGateway
+      VpcId: !Ref iteaVpc   
 
-  itea-route-table:
+  iteaRouteTable:
     Type: AWS::EC2::RouteTable
     Properties: 
       Tags: 
         - Key: Name
-          Value: itea-route-table
-      VpcId: !Ref itea-vpc
+          Value: iteaRouteTable
+      VpcId: !Ref iteaVpc
 
-  itea-route:
+  iteaRoute:
     Type: AWS::EC2::Route
-    DependsOn: itea-igateway-Attachment
+    DependsOn: iteaIGatewayAttachment
     Properties:
-       RouteTableId: !Ref itea-route-table
+       RouteTableId: !Ref iteaRouteTable
        DestinationCidrBlock: 0.0.0.0/0
-       GatewayId: !Ref itea-igateway
+       GatewayId: !Ref iteaIGateway
   
 
-  itea-public-subnet-1:
+  iteaPublicSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties: 
-      RouteTableId: !Ref itea-route-table
-      SubnetId: !Ref itea-subnet-1
+      RouteTableId: !Ref iteaRouteTable
+      SubnetId: !Ref iteaSubnet1
 
-  itea-ubnt-sg:
+  iteaUbntSG:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: Allow SSH and HTTP to client host
@@ -101,10 +100,10 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags: 
         - Key: Name
-          Value: itea-ubnt-sg
-      VpcId: !Ref itea-vpc
+          Value: iteaUbntSG
+      VpcId: !Ref iteaVpc
 
-  itea-db-sg:
+  iteaDBSG:
     Type: AWS::EC2::SecurityGroup
     Properties: 
       GroupDescription: Allow port 3306 to client host
@@ -120,21 +119,21 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags: 
         - Key: Name
-          Value: itea-db-sg
-      VpcId: !Ref itea-vpc
+          Value: iteaDBSG
+      VpcId: !Ref iteaVpc
 
-  ubuntu-ITEA-1:
+  ubuntuITEA1:
     Type: AWS::EC2::Instance
     Properties: 
       ImageId: ami-0932440befd74cdba
-      InstanceType: !Ref t2.micro
-      SubnetId: itea-subnet-1
+      InstanceType: t2.micro
+      SubnetId: !Ref iteaSubnet1
       SecurityGroupIds: 
-        - Ref: itea-ubnt-sg
-      KeyName: !Ref Frankfurt-Linux-ubuntu
+        - Ref: iteaUbntSG
+      KeyName: Frankfurt-Key-UBNT	
       Tags: 
         - Key: Name
-          Value: ubuntu-ITEA-1
+          Value: ubuntuITEA1
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash 
@@ -145,11 +144,12 @@ Resources:
           sudo apt-get -y update
           sudo apt-get -y install docker-ce docker-ce-cli containerd.io
           sudo systemctl start docker
+          sudo usermod -aG docker ubuntu
           sudo docker run --rm --name wordpress -it -d -p80:80 wordpress
           sudo docker exec wordpress apt-get -y update
           sudo docker exec wordpress apt -y install wget unzip
 
-  itea-s3-bucket-sturyk:
+  iteaS3BucketSturyk:
     Type: AWS::S3::Bucket
     Properties: 
       BucketName: itea-s3-bucket-sturyk
@@ -158,4 +158,10 @@ Resources:
         - Key: Name
           Value: ITEA-S3-bucket-sturyk
 
-  
+#=================== OUTPUTS ===========================
+Outputs:
+  ubuntuITEA1:
+    Description: IP Address of EC2
+    Value: !GetAtt ubuntuITEA1.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicIp"
